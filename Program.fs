@@ -94,8 +94,64 @@ let rec dropShapes (n: int) (state: State) (shape: Shape) : State =
         let shape = nextShape shape
         dropShapes (n - 1) state shape
 
-let result = dropShapes 2022 (State.initState input) LINE
+let result = dropShapes 20220 (State.initState input) LINE
+
+let rockCounts = result.Rows |> List.map countRocks
 
 printfn "Result: {{{"
-printShape result.Rows
+// printShape result.Rows
 printfn "}}}"
+
+let allShapeRocks = [LINE;PLUS;ANGLE;BAR;BOX] |> List.concat |> List.map countRocks |> List.sum 
+
+// rockCounts |> List.map (printf "%A ")
+
+printfn $"allShapeRocks ={allShapeRocks}"
+
+let rec takeUntilMultiple (rocks: int list) (i:int) (lines:int) : Option<int*int> =
+    if i > 0 && i % 22 = 0 then Some(i,lines)
+    else 
+    match rocks with
+    | [] -> None 
+    | a::rest -> takeUntilMultiple rest (i+a) (lines+1)
+
+let rec divByMultiple (rocks:int list) =
+    // printfn $"rocks = {rocks}"
+    if rocks.Length < 20 then []
+    else 
+    match takeUntilMultiple rocks 0 0 with
+    | Some (multi,lines) ->
+        // rocks |> List.take lines  |> List.sum |> (printfn "Takes group: %A")
+        let next = rocks |> List.skip lines
+        // printfn $"({multi},{lines})"
+        (multi,lines) :: (divByMultiple next)
+    | None -> []
+let multiplies = divByMultiple rockCounts |> List.map (fun (i,j) -> (i/22,j))
+
+printfn $"m={multiplies} length={multiplies.Length}"
+
+let bufferSizesToTry = seq { 1..multiplies.Length/2 } |> Seq.toList
+
+let testBufferSize (rocks:(int*int) list) (size:int) : Option<(int*int) list>=
+    let buffer1 = rocks |> List.take size
+    let buffer2 = rocks |> List.skip size |> List.take size
+    if buffer1 = buffer2 then Some(buffer1) else None
+    
+let firstRepeat = bufferSizesToTry |> List.tryFind (fun size -> testBufferSize multiplies size |> Option.isSome)
+
+let buffer1 = multiplies |> List.take firstRepeat.Value
+let buffer2 = multiplies |> List.skip firstRepeat.Value |> List.take firstRepeat.Value
+
+buffer1 |> List.map (printf "%A ")
+printfn ""
+buffer2 |> List.map (printf "%A ")
+printfn ""
+
+let rocksInSequence = buffer1 |> List.map fst  |> List.sum |> (fun n -> n * 5)
+let linesInSequence = buffer1 |> List.map snd |> List.sum
+
+printfn $"Rocks = {rocksInSequence} lines={linesInSequence}"
+
+// ok, time for fun
+
+
