@@ -3,7 +3,7 @@
 open day17.State
 open day17.Shape
 
-let lines = File.ReadAllLines "/tmp/aoc/input.t" |> Array.toList
+let lines = File.ReadAllLines "/tmp/aoc/input" |> Array.toList
 
 let parse (s: string) = s.ToCharArray() |> Array.toList
 
@@ -154,4 +154,28 @@ printfn $"Rocks = {rocksInSequence} lines={linesInSequence}"
 
 // ok, time for fun
 
+let ALL_THE_ROCKS : int64 = 1000000000000L
+let findLinesFromSeq (rocksInSequence: int) (linesInSequence:int): int64 =
+    let rocksInSequence = rocksInSequence |> int64
+    let linesInSequence = linesInSequence |> int64
+    ALL_THE_ROCKS / (rocksInSequence) * linesInSequence 
 
+let leftoverRocks (rocksInSequence: int) : int64 =
+    let rocksInSequence = rocksInSequence |> int64
+    ALL_THE_ROCKS % rocksInSequence
+
+let firstLines = findLinesFromSeq rocksInSequence linesInSequence
+let moreRocks = leftoverRocks rocksInSequence
+
+printfn $"RESULT2 firstLines={firstLines} more rocks={moreRocks}"
+
+let lastLines =
+    let rockCount = rocksInSequence + (moreRocks |> int)
+    let state = State.initState input
+    let result = dropShapes rockCount state LINE
+    result.Rows |> List.skipWhile (fun l -> l = 0b0uy) |> List.length
+
+let finalResult = lastLines - linesInSequence |> int64 |> (fun last -> last + firstLines)
+
+printfn $"Result2: lastLines={lastLines} inSeq={linesInSequence} diff={lastLines - linesInSequence}"
+printfn $"final result: {finalResult}"
